@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lista de Atributos por Entidades</title>
+</head>
+<body>
+    <h1>Lista de Atributos por Entidades</h1>
+    
+    {% for table, columns in entity_attributes.items() %}
+        <h2>{{ table }}</h2>
+        <ul>
+            {% for column in columns %}
+                <li>{{ column }}</li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+</body>
+</html>

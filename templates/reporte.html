@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reporte de Tablas y Entidades</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reporte de Tablas y Entidades</h1>
+    {% for nombre_tabla, columnas in entidades.items() %}
+        <h2>{{ nombre_tabla }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre de Columna</th>
+                    <th>Tipo de Dato</th>
+                    <th>Otros Detalles</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for columna in columnas %}
+                    <tr>
+                        <td>{{ columna[0] }}</td>
+                        <td>{{ columna[1] }}</td>
+                        <td>{{ columna[2:] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+</body>
+</html>
