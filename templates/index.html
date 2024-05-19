@@ -128,28 +128,16 @@
     <h2>Consultar Roles Creados</h2>
     <form action="/get_roles" method="get">
         <button type="submit">Consultar Roles</button>
+    </form> <h2>Crear Backup</h2>
+    <form action="/backup" method="post">
+        <input type="submit" value="Crear Backup">
     </form>
-
-    <h2>Descargar backup_database</h2> <form action="/backup_database" method="get">
-        <button type="submit">Generar Respaldo</button>
+    <h2>Restaurar Backup</h2>
+    <form action="/restaurar" method="post" enctype="multipart/form-data">
+        <label for="archivo_backup">Seleccionar archivo de backup:</label>
+        <input type="file" id="archivo_backup" name="archivo_backup" accept=".sql" required>
+        <input type="submit" value="Restaurar Backup">
     </form>
-    
-    <!-- Formulario para cargar el archivo de respaldo -->
-    <form action="{{ url_for('restore_database') }}" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept=".sql" required>
-        <button type="submit">Restaurar Base de Datos</button>
-    </form>
-    
-    <!-- Mensajes flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <ul>
-                {% for category, message in messages %}
-                    <li>{{ category }}: {{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
 
     <h2>Listar entidades</h2>
     <form action="/entidades" method="get">

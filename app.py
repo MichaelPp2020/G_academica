@@ -8,6 +8,10 @@ from flask import render_template
 import mysql.connector
 import pdfkit
 from pdfkit.api import configuration
+import datetime
+import os
+import tempfile
+
 
 
 
@@ -149,41 +153,83 @@ def get_roles():
     return render_template('roles.html', roles=roles)
 
 
-@app.route('/backup_database')
-def backup_database():
-    backup_command = ["mysqldump", "-u", "root", "-padmin", "G_Academica"]
+# Ruta para crear un backup
+@app.route('/backup', methods=['POST'])
+def backup():
+    host = 'localhost'
+    usuario = 'root'
+    contraseña = 'admin'
+    nombre_bd = 'G_Academica'
+    ruta_guardado = r"C:\Users\PALACIOS\Desktop\Backup"
 
-    with open("backup.sql", "w") as output_file:
-        result = subprocess.run(backup_command, stdout=output_file, text=True)
+    # Nombre del archivo de backup basado en la fecha y hora actual
+    fecha_actual = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    nombre_archivo = f"{nombre_bd}_{fecha_actual}.sql"
+    
+    # Comando para crear el backup utilizando mysqldump
+    comando = [
+        "mysqldump",
+        f"--host={host}",
+        f"--user={usuario}",
+        f"--password={contraseña}",
+        nombre_bd,
+        f"> {ruta_guardado}\\{nombre_archivo}"  # Utilizamos "\\" para escapar la barra invertida en la ruta de Windows
+    ]
 
-    if result.returncode != 0:
-        return "Error al realizar el respaldo de la base de datos.", 500
+    # Ejecutar el comando
+    try:
+        subprocess.run(" ".join(comando), shell=True, check=True)
+        mensaje = "Backup creado exitosamente."
+    except subprocess.CalledProcessError as e:
+        mensaje = f"Error al crear el backup: {e}"
 
-    return send_file('backup.sql', as_attachment=True)
+    return render_template('index.html', mensaje=mensaje)
 
-@app.route('/restore_database', methods=['POST'])
-def restore_database():
-    # Verificar si se ha enviado un archivo
-    if 'file' not in request.files:
-        flash('No se ha proporcionado ningún archivo', 'error')
+# Ruta para restaurar un backup@app.route('/restaurar', methods=['POST'])
+@app.route('/restaurar', methods=['POST'])
+def restaurar():
+    host = 'localhost'
+    usuario = 'root'
+    contraseña = 'admin'
+    nombre_bd = 'G_Academica'
+    
+    # Obtener el archivo de backup enviado por el usuario
+    archivo_backup = request.files['archivo_backup']
+    
+    # Verificar si se envió un archivo
+    if archivo_backup.filename == '':
+        flash('No se seleccionó ningún archivo.')
         return redirect(url_for('index'))
-    
-    file = request.files['file']
-    
-    # Verificar si se ha seleccionado un archivo
-    if file.filename == '':
-        flash('No se ha seleccionado ningún archivo', 'error')
-        return redirect(url_for('index'))
-    
-    # Guardar el archivo en el servidor
-    file.save(file.filename)
-    
-    # Restaurar la base de datos utilizando el archivo
-    restore_command = f"mysql -u tu_usuario -p'tu_contraseña' tu_base_de_datos < {file.filename}"
-    import os
-    os.system(restore_command)
-    
-    flash('La base de datos ha sido restaurada con éxito', 'success')
+
+    # Verificar si el archivo es un archivo SQL
+    if archivo_backup.filename.endswith('.sql'):
+        # Crear una ruta temporal única para guardar el archivo
+        ruta_temporal = os.path.join(tempfile.gettempdir(), archivo_backup.filename)
+        archivo_backup.save(ruta_temporal)
+
+        # Comando para restaurar el backup utilizando mysql
+        comando = [
+            "mysql",
+            f"--host={host}",
+            f"--user={usuario}",
+            f"--password={contraseña}",
+            nombre_bd,
+            f"< {ruta_temporal}"
+        ]
+
+        # Ejecutar el comando
+        try:
+            os.system(" ".join(comando))
+            mensaje = "Restauración completada exitosamente."
+            flash(mensaje)
+        except Exception as e:
+            flash(f"Error al restaurar el backup: {e}")
+
+        # Eliminar el archivo temporal
+        os.remove(ruta_temporal)
+    else:
+        flash('El archivo seleccionado no es un archivo SQL.')
+
     return redirect(url_for('index'))
 
 @app.route('/list_entities')
